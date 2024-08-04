@@ -1,6 +1,7 @@
 package com.bank.service.impl;
 
 import com.bank.dto.AccountInfo;
+import com.bank.dto.EmailDetails;
 import com.bank.dto.UserRequest;
 import com.bank.entity.User;
 import com.bank.repository.IUserRepository;
@@ -16,6 +17,7 @@ import java.util.Map;
 public class UserServiceImpl implements UserService{
 
     private final IUserRepository userRepository;
+    private final IEmailService emailService;
 
     @Override
     public Object createAccount(UserRequest userRequestU) {
@@ -48,6 +50,15 @@ public class UserServiceImpl implements UserService{
 
         User saveUser = userRepository.save(newUser);
 
+        // Email send
+        EmailDetails emailDetails = EmailDetails.builder()
+                .recipient(saveUser.getEmail())
+                .subject("Account creation")
+                .messageBody("Congratulations!!")
+                .build();
+
+        emailService.sendEmailAlert(emailDetails);
+
         return response = java.util.Map.of(
                 "responseMessage", AccountUtils.ACCOUNT_CREATION_MESSAGE,
                 "responsecode", AccountUtils.ACCOUNT_CREATION_SUCCESS,
@@ -56,15 +67,6 @@ public class UserServiceImpl implements UserService{
                         .accountNumber(saveUser.getAccountNumber())
                         .accountName(saveUser.getFirstName() + " " + saveUser.getLastName() + " " + saveUser.getOtherName())
                         .build());
-//                BankResponse.builder()
-//                .responseMessage(AccountUtils.ACCOUNT_CREATION_MESSAGE)
-//                .responsecode(AccountUtils.ACCOUNT_CREATION_SUCCESS)
-//                .accountInfo(AccountInfo.builder()
-//                        .accountBalance(saveUser.getAccountBalance())
-//                        .accountNumber(saveUser.getAccountNumber())
-//                        .accountName(saveUser.getFirstName() + " " + saveUser.getLastName() + " " + saveUser.getOtherName())
-//                        .build())
-//                .build();
     }
 
 }
