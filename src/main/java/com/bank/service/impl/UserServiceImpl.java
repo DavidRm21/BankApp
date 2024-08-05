@@ -1,8 +1,6 @@
 package com.bank.service.impl;
 
-import com.bank.dto.AccountInfo;
-import com.bank.dto.EmailDetails;
-import com.bank.dto.UserRequest;
+import com.bank.dto.*;
 import com.bank.entity.User;
 import com.bank.repository.IUserRepository;
 import com.bank.utils.AccountUtils;
@@ -10,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Map;
 
 @Service
@@ -19,11 +18,19 @@ public class UserServiceImpl implements UserService{
     private final IUserRepository userRepository;
     private final IEmailService emailService;
 
+
+    /**
+     * Crea una cuenta para un nuevo usuario.
+     *
+     * @param userRequestU Datos del usuario para la creación de la cuenta.
+     * @return Respuesta con el resultado de la operación.
+     */
     @Override
     public Object createAccount(UserRequest userRequestU) {
 
         Map<String, Object> response;
 
+        // Verifica si ya existe una cuenta con el correo proporcionado
         if(userRepository.existsByEmail(userRequestU.getEmail())){
             response = java.util.Map.of(
                     "responsecode", AccountUtils.ACCOUNT_EXIST_CODE,
@@ -33,6 +40,7 @@ public class UserServiceImpl implements UserService{
             return response;
         }
 
+        // Crea un nuevo usuario
         User newUser = User.builder()
                 .firstName(userRequestU.getFirstName())
                 .lastName(userRequestU.getLastName())
@@ -48,16 +56,18 @@ public class UserServiceImpl implements UserService{
                 .accountBalance(BigDecimal.ZERO)
                 .build();
 
+        // Guarda el nuevo usuario en el repositorio
         User saveUser = userRepository.save(newUser);
 
-        // Email send
-        EmailDetails emailDetails = EmailDetails.builder()
+        // Envía un correo electrónico de confirmación
+        /*EmailDetails emailDetails = EmailDetails.builder()
                 .recipient(saveUser.getEmail())
                 .subject("Account creation")
                 .messageBody("Congratulations!!")
                 .build();
 
-        emailService.sendEmailAlert(emailDetails);
+        // Retorna la respuesta de creación de cuenta
+        emailService.sendEmailAlert(emailDetails);*/
 
         return response = java.util.Map.of(
                 "responseMessage", AccountUtils.ACCOUNT_CREATION_MESSAGE,
@@ -68,5 +78,129 @@ public class UserServiceImpl implements UserService{
                         .accountName(saveUser.getFirstName() + " " + saveUser.getLastName() + " " + saveUser.getOtherName())
                         .build());
     }
+
+    /**
+     * Consulta el saldo de una cuenta.
+     *
+     * @param enquiryRequest Solicitud de consulta.
+     * @return Respuesta con el resultado de la consulta de saldo.
+     */
+    @Override
+    public BankResponse balanceEnquiry(EnquiryRequest enquiryRequest) {
+        boolean isAccountExists = userRepository.existsByAccountNumber(enquiryRequest.getAccountNumber());
+        if (!isAccountExists){
+            return BankResponse.builder()
+                    .responsecode("003")
+                    .responseMessage("La cuenta no existe")
+                    .accountInfo(null)
+                    .build();
+        }
+
+        User foundUser = userRepository.findByAccountNumber(enquiryRequest.getAccountNumber());
+        return BankResponse.builder()
+                .accountInfo(AccountInfo.builder()
+                        .accountName(foundUser.getFirstName() + " " + foundUser.getLastName())
+                        .accountNumber(enquiryRequest.getAccountNumber())
+                        .accountBalance(foundUser.getAccountBalance())
+                        .build())
+                .responseMessage("Cuenta encontrada")
+                .responsecode("001")
+                .build();
+    }
+
+    /**
+     * Consulta el nombre del titular de una cuenta.
+     *
+     * @param enquiryRequest Solicitud de consulta.
+     * @return Nombre del titular de la cuenta.
+     */
+    @Override
+    public String nameEnquiry(EnquiryRequest enquiryRequest) {
+        boolean isAccountExists = userRepository.existsByAccountNumber(enquiryRequest.getAccountNumber());
+        if (!isAccountExists){
+            return "La cuenta no existe";
+        }
+        User foundUser = userRepository.findByAccountNumber(enquiryRequest.getAccountNumber());
+        return foundUser.getFirstName() + " " + foundUser.getLastName();
+    }
+
+    /**
+     * Acredita una cuenta con un monto especificado.
+     *
+     * @param creditDebitRequest Solicitud de crédito.
+     * @return Respuesta con el resultado de la operación de crédito.
+     */
+    @Override
+    public BankResponse creditAccount(CreditDebitRequest creditDebitRequest) {
+        // Verificar si la cuenta existe
+        boolean isAccountExists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
+        if (!isAccountExists){
+            return BankResponse.builder()
+                    .responsecode("003")
+                    .responseMessage("La cuenta no existe")
+                    .accountInfo(null)
+                    .build();
+        }
+
+        // Acreditar el monto en la cuenta
+        User userToCredit = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
+        userToCredit.setAccountBalance(userToCredit.getAccountBalance().add(creditDebitRequest.getAmount()));
+        // Guardar los cambios en la cuenta
+        userRepository.save(userToCredit);
+
+        return BankResponse.builder()
+                .responsecode("005")
+                .responseMessage("Credito exitoso")
+                .accountInfo(AccountInfo.builder()
+                        .accountName(userToCredit.getFirstName() + " " + userToCredit.getLastName())
+                        .accountNumber(creditDebitRequest.getAccountNumber())
+                        .accountBalance(userToCredit.getAccountBalance())
+                        .build())
+                .build();
+    }
+
+    /**
+     * Debita una cuenta con un monto especificado.
+     *
+     * @param creditDebitRequest Solicitud de débito.
+     * @return Respuesta con el resultado de la operación de débito.
+     */
+    @Override
+    public BankResponse debitAccount(CreditDebitRequest creditDebitRequest) {
+        // Verificar si la cuenta existe
+        boolean isAccountExists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
+        if (!isAccountExists){
+            return BankResponse.builder()
+                    .responsecode("003")
+                    .responseMessage("La cuenta no existe")
+                    .accountInfo(null)
+                    .build();
+        }
+        // Verificar si el monto que se intenta debitar no es mayor a lo que esta en la cuenta
+        User userToDebit = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
+        BigInteger availableBalance = userToDebit.getAccountBalance().toBigInteger();
+        BigInteger debitAmount = creditDebitRequest.getAmount().toBigInteger();
+        if(availableBalance.intValue() < debitAmount.intValue() ){
+            return BankResponse.builder()
+                    .responsecode("006")
+                    .responseMessage("Saldo insuficiente.")
+                    .accountInfo(null)
+                    .build();
+        } else{
+            userToDebit.setAccountBalance(userToDebit.getAccountBalance().subtract(creditDebitRequest.getAmount()));
+            userRepository.save(userToDebit);
+            return BankResponse.builder()
+                    .accountInfo(AccountInfo.builder()
+                            .accountBalance(userToDebit.getAccountBalance())
+                            .accountNumber(userToDebit.getAccountNumber())
+                            .accountName(userToDebit.getFirstName() + " " + userToDebit.getLastName())
+                            .build())
+                    .responseMessage("La cuenta ha sido debitada exitosamente")
+                    .responsecode("007")
+                    .build();
+        }
+    }
+
+    //balance Enquiry, name enquiry, credir, debit, transfer
 
 }
