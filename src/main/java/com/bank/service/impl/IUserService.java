@@ -2,7 +2,7 @@ package com.bank.service.impl;
 
 import com.bank.dto.*;
 
-public interface UserService {
+public interface IUserService {
 
     Object createAccount(UserRequest userRequestU);
 

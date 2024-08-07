@@ -1,7 +1,7 @@
 package com.bank.controller;
 
 import com.bank.dto.*;
-import com.bank.service.impl.UserService;
+import com.bank.service.impl.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class UserController {
 
-    private final UserService userService;
+    private final IUserService userService;
 
 
     @PostMapping

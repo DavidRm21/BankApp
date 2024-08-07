@@ -4,7 +4,7 @@ spring:
 
   datasource:
     url: ${DATABASE_URL}
-    username: C##DESARROLLO
+    username: ${DATABASE_USER}
     password: ${DATABASE_PASS}
     driver-class-name: oracle.jdbc.OracleDriver
 
@@ -14,8 +14,8 @@ spring:
     show-sql: true
 
   mail:
-    host: smtp.gmail.com
-    port: 587
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
     username: ${MAIL_USER}
     password: ${MAIL_PASSWORD}
     properties:

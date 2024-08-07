@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements IUserService {
 
     private final IUserRepository userRepository;
     private final IEmailService emailService;
