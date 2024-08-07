@@ -34,6 +34,13 @@ dependencies {
 
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-mail', version: '3.3.2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+// https://mvnrepository.com/artifact/com.itextpdf/itextpdf
+	implementation group: 'com.itextpdf', name: 'itextpdf', version: '5.5.13.4'
+	implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.6.0'
+	implementation group: 'com.github.ulisesbocchio', name: 'jasypt-spring-boot-starter', version: '3.0.5'
+	implementation group: 'org.jasypt', name: 'jasypt', version: '1.9.3'
+
 }
 
 tasks.named('test') {

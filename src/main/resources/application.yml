@@ -3,9 +3,9 @@ spring:
     name: wo
 
   datasource:
-    url: jdbc:oracle:thin:@localhost:1521:xe
+    url: ${DATABASE_URL}
     username: C##DESARROLLO
-    password: admin
+    password: ${DATABASE_PASS}
     driver-class-name: oracle.jdbc.OracleDriver
 
   jpa:
@@ -16,8 +16,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: mail@gmail.com
-    password: asseoezlmxriydfllqsa
+    username: ${MAIL_USER}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -28,4 +28,7 @@ spring:
 server:
   port: 8002
 
-
+jasypt:
+  encryptor:
+    algorithm: PBEWITHHMACSHA512ANDAES_256
+    password: ${JASYPT_PASSWORD:}

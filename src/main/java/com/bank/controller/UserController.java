@@ -1,19 +1,19 @@
 package com.bank.controller;
 
-import com.bank.dto.BankResponse;
-import com.bank.dto.CreditDebitRequest;
-import com.bank.dto.EnquiryRequest;
-import com.bank.dto.UserRequest;
+import com.bank.dto.*;
 import com.bank.service.impl.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private final UserService userService;
+
 
     @PostMapping
     public Object createdAccount(@RequestBody UserRequest userRequest){
@@ -38,5 +38,10 @@ public class UserController {
     @PostMapping("/debit")
     public BankResponse debitAccount(@RequestBody CreditDebitRequest request){
         return userService.debitAccount(request);
+    }
+
+    @PostMapping("/transfer")
+    public BankResponse transfer(@RequestBody TransferRequest request){
+        return userService.transfer(request);
     }
 }
